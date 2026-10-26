@@ -20,6 +20,8 @@ app.use((0, cors_1.default)({
     origin: [
         "*",
         "http://localhost:5173",
+        "https://algoquad-hr-portal.vercel.app",
+        "https://www.algoquad.in"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
