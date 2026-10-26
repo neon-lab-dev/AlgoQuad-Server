@@ -27,7 +27,7 @@ app.use((0, cors_1.default)({
 }));
 // Root route
 app.get("/", (req, res) => {
-    res.send("Welcome to Astrotitan! Api is up and running.");
+    res.send("Welcome to AlgoQuad! Api is up and running.");
 });
 // Application routes
 app.use("/api/v1", routes_1.default);

@@ -29,7 +29,7 @@ app.use(
 
 // Root route
 app.get("/", (req, res) => {
-  res.send("Welcome to Astrotitan! Api is up and running.");
+  res.send("Welcome to AlgoQuad! Api is up and running.");
 });
 
 // Application routes
