@@ -312,10 +312,10 @@ const updateApplication = async (
   // Validate rating range
   if (payload.resumeRating !== undefined) {
     const r = Number(payload.resumeRating);
-    if (isNaN(r) || r < 0 || r > 5) {
+    if (isNaN(r) || r < 0 || r > 10) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
-        "resumeRating must be between 0 and 5"
+        "resumeRating must be between 0 and 10"
       );
     }
     payload.resumeRating = r;
