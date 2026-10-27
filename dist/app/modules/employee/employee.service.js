@@ -19,7 +19,6 @@ const AppError_1 = __importDefault(require("../../errors/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
 const auth_model_1 = require("../auth/auth.model");
 const sendImageToCloudinary_1 = require("../../utils/sendImageToCloudinary");
-const infinitePaginate_1 = require("../../utils/infinitePaginate");
 // Helper to generate ID (AQ-YYMMDD-XXX)
 const generateEmployeeId = (joiningDate) => __awaiter(void 0, void 0, void 0, function* () {
     const dateStr = joiningDate.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
@@ -90,22 +89,87 @@ const addEmployee = (payload, file) => __awaiter(void 0, void 0, void 0, functio
 });
 // 2. Get All (Search & Filter)
 const getAllEmployees = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (filters = {}, skip = 0, limit = 10) {
-    const query = {};
-    if (filters.department && filters.department !== "") {
-        query.department = filters.department;
+    var _a;
+    const matchStage = {};
+    // 1. Standard filters
+    if (filters.department) {
+        matchStage.department = filters.department;
     }
-    if (filters.status && filters.status !== "") {
-        query.accountStatus = filters.status;
+    if (filters.status) {
+        matchStage.accountStatus = filters.status;
     }
+    // 2. Build the Aggregation Pipeline
+    const pipeline = [
+        // Join the User model
+        {
+            $lookup: {
+                from: "users", // The actual collection name in MongoDB
+                localField: "userId",
+                foreignField: "_id",
+                as: "userId",
+            },
+        },
+        // Flatten the array so it becomes a direct object
+        { $unwind: "$userId" },
+    ];
+    // 3. Keyword search across BOTH Employee and User fields
     if (filters.keyword) {
         const regex = new RegExp(filters.keyword, "i");
-        query.$or = [
+        matchStage.$or = [
+            // Employee fields
             { employeeId: regex },
             { department: regex },
             { designation: regex },
+            // User fields (Now accessible because of $unwind)
+            { "userId.name": regex },
+            { "userId.email": regex },
+            { "userId.phoneNumber": regex },
+            { "userId.city": regex },
+            { "userId.state": regex },
+            { "userId.country": regex },
+            { "userId.gender": regex },
         ];
     }
-    return (0, infinitePaginate_1.infinitePaginate)(employee_model_1.default, query, skip, limit, ["userId"]);
+    // Add the $match stage to the pipeline
+    pipeline.push({ $match: matchStage });
+    // 4. Facet: Get total count AND paginated data in one query
+    pipeline.push({
+        $facet: {
+            metadata: [{ $count: "total" }],
+            data: [
+                { $skip: Number(skip) },
+                { $limit: Number(limit) },
+                // Ensure we return the populated shape the frontend expects
+                {
+                    $project: {
+                        _id: 1,
+                        employeeId: 1,
+                        department: 1,
+                        designation: 1,
+                        joiningDate: 1,
+                        employmentType: 1,
+                        accountStatus: 1,
+                        isFirstLogin: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        userId: 1, // The unwound user object
+                    }
+                }
+            ],
+        },
+    });
+    const result = yield employee_model_1.default.aggregate(pipeline);
+    const data = result[0].data;
+    const total = ((_a = result[0].metadata[0]) === null || _a === void 0 ? void 0 : _a.total) || 0;
+    return {
+        meta: {
+            total,
+            skip: Number(skip),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / Number(limit)),
+        },
+        data,
+    };
 });
 // 3. Get Single
 const getSingleEmployee = (id) => __awaiter(void 0, void 0, void 0, function* () {

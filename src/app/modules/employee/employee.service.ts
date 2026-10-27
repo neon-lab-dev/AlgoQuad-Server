@@ -4,7 +4,6 @@ import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { User } from "../auth/auth.model";
 import { sendImageToCloudinary } from "../../utils/sendImageToCloudinary";
-import { infinitePaginate } from "../../utils/infinitePaginate";
 
 // Helper to generate ID (AQ-YYMMDD-XXX)
 const generateEmployeeId = async (joiningDate: Date) => {
@@ -95,31 +94,95 @@ const getAllEmployees = async (
     skip = 0,
     limit = 10
 ) => {
-    const query: any = {};
+    const matchStage: any = {};
 
-    if (filters.department && filters.department !== "") {
-        query.department = filters.department;
+    // 1. Standard filters
+    if (filters.department) {
+        matchStage.department = filters.department;
     }
-    if (filters.status && filters.status !== "") {
-        query.accountStatus = filters.status;
+    if (filters.status) {
+        matchStage.accountStatus = filters.status;
     }
 
+    // 2. Build the Aggregation Pipeline
+    const pipeline: any[] = [
+        // Join the User model
+        {
+            $lookup: {
+                from: "users", // The actual collection name in MongoDB
+                localField: "userId",
+                foreignField: "_id",
+                as: "userId",
+            },
+        },
+        // Flatten the array so it becomes a direct object
+        { $unwind: "$userId" },
+    ];
+
+    // 3. Keyword search across BOTH Employee and User fields
     if (filters.keyword) {
         const regex = new RegExp(filters.keyword, "i");
-        query.$or = [
+        matchStage.$or = [
+            // Employee fields
             { employeeId: regex },
             { department: regex },
             { designation: regex },
+
+            // User fields (Now accessible because of $unwind)
+            { "userId.name": regex },
+            { "userId.email": regex },
+            { "userId.phoneNumber": regex },
+            { "userId.city": regex },
+            { "userId.state": regex },
+            { "userId.country": regex },
+            { "userId.gender": regex },
         ];
     }
 
-    return infinitePaginate(
-        Employee,
-        query,
-        skip,
-        limit,
-        ["userId"],
-    );
+    // Add the $match stage to the pipeline
+    pipeline.push({ $match: matchStage });
+
+    // 4. Facet: Get total count AND paginated data in one query
+    pipeline.push({
+        $facet: {
+            metadata: [{ $count: "total" }],
+            data: [
+                { $skip: Number(skip) },
+                { $limit: Number(limit) },
+                // Ensure we return the populated shape the frontend expects
+                {
+                    $project: {
+                        _id: 1,
+                        employeeId: 1,
+                        department: 1,
+                        designation: 1,
+                        joiningDate: 1,
+                        employmentType: 1,
+                        accountStatus: 1,
+                        isFirstLogin: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        userId: 1, // The unwound user object
+                    }
+                }
+            ],
+        },
+    });
+
+    const result = await Employee.aggregate(pipeline);
+
+    const data = result[0].data;
+    const total = result[0].metadata[0]?.total || 0;
+
+    return {
+        meta: {
+            total,
+            skip: Number(skip),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / Number(limit)),
+        },
+        data,
+    };
 };
 
 // 3. Get Single
