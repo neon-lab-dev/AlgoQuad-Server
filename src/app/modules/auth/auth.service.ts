@@ -11,7 +11,6 @@ import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/sendEmail";
 
 const signup = async (payload: Partial<TUser>) => {
-  console.log(payload);
   // Checking if user already exists
   const isUserExistsByEmail = await User.findOne({ email: payload.email });
   const isUserExistsByPhoneNumber = await User.findOne({

@@ -17,7 +17,7 @@ export type TUser = {
   state?: string;
   country?: string;
   password: string;
-  role: "hr" | "admin";
+  role: "hr" | "employee" | "admin";
   isDeleted?: boolean;
   isSuspended?: boolean;
   suspensionReason?: string | null;
@@ -30,6 +30,7 @@ export type TUser = {
   resetOtp?: string | null;
   resetOtpExpireAt?: Date | null;
   isResetOtpVerified?: boolean | null;
+  isFirstLogin: boolean;
 };
 
 export interface UserModel extends Model<TUser> {

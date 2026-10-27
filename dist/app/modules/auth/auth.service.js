@@ -24,7 +24,6 @@ const auth_model_1 = require("./auth.model");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const sendEmail_1 = require("../../utils/sendEmail");
 const signup = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(payload);
     // Checking if user already exists
     const isUserExistsByEmail = yield auth_model_1.User.findOne({ email: payload.email });
     const isUserExistsByPhoneNumber = yield auth_model_1.User.findOne({

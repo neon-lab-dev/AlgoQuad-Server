@@ -30,7 +30,7 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     gender: {
       type: String,
-      enum: ["male", "female", "other"],
+      enum: ["Male", "Female", "Other"],
     },
     city: {
       type: String,
@@ -54,7 +54,7 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     role: {
       type: String,
-      enum: ["hr", "admin"],
+      enum: ["hr", "employee", "admin"],
       required: true,
     },
     isDeleted: {
@@ -85,6 +85,10 @@ const userSchema = new Schema<TUser, UserModel>(
       type: Boolean,
       default: false,
     },
+    isFirstLogin: {
+      type: Boolean,
+      default: true,
+    }
   },
   {
     timestamps: true,

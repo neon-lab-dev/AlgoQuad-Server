@@ -42,7 +42,7 @@ const userSchema = new mongoose_1.Schema({
     },
     gender: {
         type: String,
-        enum: ["male", "female", "other"],
+        enum: ["Male", "Female", "Other"],
     },
     city: {
         type: String,
@@ -66,7 +66,7 @@ const userSchema = new mongoose_1.Schema({
     },
     role: {
         type: String,
-        enum: ["hr", "admin"],
+        enum: ["hr", "employee", "admin"],
         required: true,
     },
     isDeleted: {
@@ -97,6 +97,10 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    isFirstLogin: {
+        type: Boolean,
+        default: true,
+    }
 }, {
     timestamps: true,
 });
