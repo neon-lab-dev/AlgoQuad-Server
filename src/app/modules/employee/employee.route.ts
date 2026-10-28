@@ -12,7 +12,7 @@ router.post("/add", auth(UserRole.hr, UserRole.admin), multerUpload.single("file
 // Get All
 router.get("/", auth(UserRole.hr, UserRole.admin), EmployeeController.getAllEmployees);
 
-router.get("/my-profile", auth(UserRole.employee), EmployeeController.getMyProfile);
+router.get("/my-profile", auth(UserRole.employee, UserRole.hr), EmployeeController.getMyProfile);
 
 // Get Single
 router.get("/:id", auth(UserRole.hr, UserRole.admin), EmployeeController.getSingleEmployee);

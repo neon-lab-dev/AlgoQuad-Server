@@ -85,6 +85,7 @@ const loginUser = async (payload: TLoginAuth) => {
     phoneNumber: user.phoneNumber,
     role: user.role,
     profilePicture: user.profilePicture || "",
+    isFirstLogin: user.isFirstLogin,
   };
 
   // Tokens
@@ -110,6 +111,7 @@ const loginUser = async (payload: TLoginAuth) => {
       phoneNumber: user.phoneNumber,
       role: user.role,
       profilePicture: user.profilePicture || "",
+      isFirstLogin: user.isFirstLogin,
     },
   };
 };
@@ -302,8 +304,9 @@ const verifyResetOtp = async (email: string, otp: string) => {
 const resetPassword = async (payload: {
   email: string;
   newPassword: string;
+  purpose?: string;
 }) => {
-  const { email, newPassword } = payload;
+  const { email, newPassword, purpose } = payload;
 
   const user = await User.findOne({ email }).select("+password");
 
@@ -318,23 +321,24 @@ const resetPassword = async (payload: {
     );
   }
 
-  if (!user.isResetOtpVerified) {
+  if (purpose !== "firstTimeLogin" && !user.isResetOtpVerified) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "OTP not verified. Please verify OTP before resetting password."
     );
   }
 
-  // IMPORTANT:
-  // Assign plain password.
-  // pre("save") middleware will hash it.
   user.password = newPassword;
-
   user.passwordChangedAt = new Date();
-  user.isResetOtpVerified = false;
 
+  // Clear OTP state
+  user.isResetOtpVerified = false;
   user.resetOtp = null;
   user.resetOtpExpireAt = null;
+
+  if (purpose === "firstTimeLogin") {
+    user.isFirstLogin = false;
+  }
 
   await user.save();
 

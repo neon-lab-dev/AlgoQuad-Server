@@ -52,7 +52,7 @@ const addEmployee = async (payload: any, file?: Express.Multer.File) => {
             state: payload.state,
             country: payload.country,
             password: "12345678", // Default password
-            role: "employee",
+            role: payload.role || "employee",
             profilePicture: profilePictureUrl,
             isFirstLogin: true,
         };
