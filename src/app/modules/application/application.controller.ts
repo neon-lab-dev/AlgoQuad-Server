@@ -7,7 +7,8 @@ import { ApplicationServices } from "./application.service";
 /* Public — apply on a job */
 const applyOnJob = catchAsync(async (req, res) => {
   const { jobId } = req.params;
-  const result = await ApplicationServices.applyOnJob(jobId, req.body);
+  const file = req.file;
+  const result = await ApplicationServices.applyOnJob(jobId, req.body, file);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -20,7 +21,8 @@ const applyOnJob = catchAsync(async (req, res) => {
 /* Admin/HR — manually add candidate */
 const addCandidate = catchAsync(async (req, res) => {
   const userId = req.user._id;
-  const result = await ApplicationServices.addCandidate(userId, req.body);
+  const file = req.file;
+  const result = await ApplicationServices.addCandidate(userId, req.body, file);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,

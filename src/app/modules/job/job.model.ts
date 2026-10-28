@@ -62,6 +62,10 @@ const jobSchema = new Schema<TJob, JobModel>(
         type: Schema.Types.ObjectId,
       },
     ],
+    applicationDeadline: {
+      type: Date,
+      required: true,
+    },
     addedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",

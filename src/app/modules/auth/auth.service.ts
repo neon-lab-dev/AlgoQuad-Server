@@ -184,22 +184,46 @@ const refreshToken = async (token: string) => {
 };
 
 const buildResetOtpEmail = (otp: string) => `
-  <div style="font-family: Arial, sans-serif; background:#f9f9f9; padding:20px;">
-    <div style="max-width:600px; margin:auto; background:#fff; border-radius:8px; padding:30px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-      <h2 style="color:#D4AF37; text-align:center;">AlgoQuad</h2>
-      <p style="font-size:16px; color:#333;">Hello,</p>
-      <p style="font-size:15px; color:#555;">
-        You requested a password reset. Please use the code below to reset your password.
-        This OTP is valid for <strong>2 minutes</strong>.
-      </p>
-      <div style="text-align:center; margin:30px 0;">
-        <p style="font-size:32px; letter-spacing:4px; font-weight:bold; color:#D4AF37;">${otp}</p>
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; padding: 40px 20px; margin: 0;">
+    <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+      
+      <!-- Header -->
+      <div style="background-color: #32AADB; padding: 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">AlgoQuad</h1>
       </div>
-      <p style="font-size:14px; color:#777;">
-        If you didn't request this, you can safely ignore this email.
-      </p>
-      <p style="font-size:15px; color:#333; margin-top:30px;">Best regards,</p>
-      <p style="font-size:16px; font-weight:bold; color:#D4AF37;">The AlgoQuad Team</p>
+
+      <!-- Body -->
+      <div style="padding: 40px 30px;">
+        <h2 style="color: #2c2c2c; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 600; text-align: center;">Password Reset Request</h2>
+        
+        <p style="font-size: 15px; color: #525252; line-height: 1.6; margin-bottom: 24px; text-align: center;">
+          Hello,<br>
+          We received a request to reset your password. Use the verification code below to proceed.
+        </p>
+
+        <!-- OTP Box -->
+        <div style="background-color: #f1f5f9; border: 2px dashed #e2e8f0; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+          <p style="margin: 0; font-size: 36px; font-weight: 700; color: #32AADB; letter-spacing: 8px; padding-left: 8px;">${otp}</p>
+        </div>
+
+        <p style="font-size: 14px; color: #525252; line-height: 1.6; margin-bottom: 8px; text-align: center;">
+          <strong>Note:</strong> This code is valid for <strong>2 minutes</strong>.
+        </p>
+
+        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 0; text-align: center;">
+          If you didn't request this change, you can safely ignore this email. Your password will remain unchanged.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div style="background-color: #fafafa; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0; font-size: 13px; color: #71717a;">
+          Best regards,<br>
+          <strong style="color: #2c2c2c;">The AlgoQuad Team</strong>
+        </p>
+      </div>
+
     </div>
   </div>
 `;
@@ -218,8 +242,8 @@ const forgetPassword = async (email: string) => {
     );
   }
 
-  // Generate OTP
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  //  6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   user.resetOtp = otp;
   user.resetOtpExpireAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
@@ -255,8 +279,8 @@ const resendForgotPasswordOtp = async (email: string) => {
     );
   }
 
-  // Generate New OTP
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  // 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   user.resetOtp = otp;
   user.resetOtpExpireAt = new Date(Date.now() + 2 * 60 * 1000); // 2 min

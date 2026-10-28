@@ -5,6 +5,7 @@ import Application from "./application.model";
 import Job from "../job/job.model";
 import AppError from "../../errors/AppError";
 import { infinitePaginate } from "../../utils/infinitePaginate";
+import { sendImageToCloudinary } from "../../utils/sendImageToCloudinary";
 
 /* ─── Helper: map status → milestone date field ───────────────── */
 const statusDateField: Record<
@@ -28,7 +29,8 @@ const applyOnJob = async (
     phoneNumber: string;
     experience: string;
     resumeUrl: string;
-  }
+  },
+  file?: Express.Multer.File
 ) => {
   if (!Types.ObjectId.isValid(jobId)) {
     throw new AppError(httpStatus.BAD_REQUEST, "Invalid job id");
@@ -47,7 +49,7 @@ const applyOnJob = async (
 
   const duplicate = await Application.findOne({
     jobId,
-    email: payload.email.toLowerCase(),
+    email: payload.email,
     isDeleted: false,
   });
   if (duplicate) {
@@ -57,10 +59,20 @@ const applyOnJob = async (
     );
   }
 
+  let resumeUrl = "";
+  if (file) {
+    const imageName = `resume-${payload.email}-${Date.now()}`;
+    const { secure_url } = await sendImageToCloudinary(imageName, file.path);
+    resumeUrl = secure_url as string;
+  } else {
+    throw new AppError(httpStatus.BAD_REQUEST, "Resume file is required");
+  }
+
   const application = await Application.create({
     ...payload,
-    email: payload.email.toLowerCase(),
+    email: payload.email,
     jobId,
+    resumeUrl,
     status: "New",
     history: [{ status: "New", at: new Date(), note: "Application submitted" }],
   });
@@ -82,11 +94,11 @@ const addCandidate = async (
     phoneNumber: string;
     jobId: string;
     experience: string;
-    resumeUrl: string;
     source: string;
     resumeRating?: number;
     status?: string;
-  }
+  },
+  file?: Express.Multer.File // <-- Accept the file
 ) => {
   if (!Types.ObjectId.isValid(payload.jobId)) {
     throw new AppError(httpStatus.BAD_REQUEST, "Invalid job id");
@@ -112,9 +124,20 @@ const addCandidate = async (
     );
   }
 
+  // ---- Upload File to Cloudinary ----
+  let resumeUrl = "";
+  if (file) {
+    const imageName = `resume-${payload.email}-${Date.now()}`;
+    const { secure_url } = await sendImageToCloudinary(imageName, file.path);
+    resumeUrl = secure_url as string;
+  } else {
+    throw new AppError(httpStatus.BAD_REQUEST, "Resume file is required");
+  }
+
   const data: any = {
     ...payload,
     email: payload.email.toLowerCase(),
+    resumeUrl, // <-- Save the URL instead of the raw file
     resumeRating: payload.resumeRating ?? 0,
     status,
     addedBy: userId,

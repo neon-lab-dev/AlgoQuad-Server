@@ -17,6 +17,7 @@ export type TJob = {
   qualifications: string[];
   perks: string[];
   applications: ObjectId[];
+  applicationDeadline: Date;
   addedBy: ObjectId;
   createdAt?: Date;
   updatedAt?: Date;

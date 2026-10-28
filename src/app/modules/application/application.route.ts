@@ -2,12 +2,14 @@ import express from "express";
 import { ApplicationControllers } from "./application.controller";
 import auth from "../../middlewares/auth";
 import { UserRole } from "../auth/auth.constants";
+import { multerUpload } from "../../config/multer.config";
 
 const router = express.Router();
 
 /* Public — anyone can apply */
 router.post(
     "/apply/:jobId",
+    multerUpload.single("file"),
     ApplicationControllers.applyOnJob
 );
 
@@ -15,6 +17,7 @@ router.post(
 router.post(
     "/add-candidate",
     auth(UserRole.admin, UserRole.hr),
+    multerUpload.single("file"),
     ApplicationControllers.addCandidate
 );
 
