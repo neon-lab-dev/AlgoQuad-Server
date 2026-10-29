@@ -84,6 +84,7 @@ const applicationSchema = new mongoose_1.Schema({
     history: { type: [historySchema], default: [] },
     addedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },
+    referredBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 // Prevent duplicate applications for the same job by the same email/phone
 applicationSchema.index({ jobId: 1, email: 1 }, { unique: true });
