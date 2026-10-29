@@ -60,7 +60,7 @@ const applyOnJob = (jobId, payload, file) => __awaiter(void 0, void 0, void 0, f
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Resume file is required");
     }
     const application = yield application_model_1.default.create(Object.assign(Object.assign({}, payload), { email: payload.email, jobId,
-        resumeUrl, status: "New", history: [{ status: "New", at: new Date(), note: "Application submitted" }], referredBy: payload.referrer }));
+        resumeUrl, status: "New", history: [{ status: "New", at: new Date(), note: "Application submitted" }], referredBy: payload.referrer || null }));
     // Link application to job
     yield job_model_1.default.findByIdAndUpdate(jobId, {
         $push: { applications: application._id },
@@ -105,7 +105,7 @@ const addCandidate = (userId, payload, file // <-- Accept the file
                 changedBy: userId,
                 at: new Date(),
             },
-        ], referredBy: payload.referredBy });
+        ], referredBy: payload.referredBy || null });
     if (dateField)
         data[dateField] = new Date();
     const application = yield application_model_1.default.create(data);

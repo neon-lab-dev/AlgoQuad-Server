@@ -89,7 +89,7 @@ const applicationSchema = new Schema<TApplication, ApplicationModel>(
     history: { type: [historySchema], default: [] },
     addedBy: { type: Schema.Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },
-    referredBy: { type: Schema.Types.ObjectId, ref: "User" },
+    referredBy: { type: Schema.Types.ObjectId, ref: "User", required:false, default:null },
   },
   { timestamps: true }
 );

@@ -47,7 +47,7 @@ export type TApplication = {
 
   addedBy?: Types.ObjectId;    // admin/hr who manually added the candidate
   isDeleted: boolean;
-  referredBy?: Types.ObjectId;
+  referredBy?: Types.ObjectId | null;
 
   createdAt?: Date;
   updatedAt?: Date;

@@ -77,7 +77,7 @@ const applyOnJob = async (
     resumeUrl,
     status: "New",
     history: [{ status: "New", at: new Date(), note: "Application submitted" }],
-    referredBy: payload.referrer,
+    referredBy: payload.referrer || null,
   });
 
   // Link application to job
@@ -153,7 +153,7 @@ const addCandidate = async (
         at: new Date(),
       },
     ],
-    referredBy: payload.referredBy,
+    referredBy: payload.referredBy || null,
   };
 
   if (dateField) data[dateField] = new Date();
