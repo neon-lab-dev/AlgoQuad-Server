@@ -9,6 +9,7 @@ import { createToken } from "./auth.utils";
 import { User } from "./auth.model";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/sendEmail";
+import Employee from "../employee/employee.model";
 
 const signup = async (payload: Partial<TUser>) => {
   // Checking if user already exists
@@ -40,6 +41,23 @@ const signup = async (payload: Partial<TUser>) => {
 const loginUser = async (payload: TLoginAuth) => {
   // Check if user exists
   const user = await User.isUserExists(payload.email);
+  const employee = await Employee.findOne({ userId: user?._id });
+
+  if (employee?.accountStatus === "Inactive") {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Your account has been deactivated. Please contact to HR for further assistance."
+    );
+  }
+
+  if (user?.role !== "admin" && !employee) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "No account found with this email address."
+    );
+  }
+
+  
 
   if (!user) {
     throw new AppError(

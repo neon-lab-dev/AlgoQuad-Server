@@ -21,7 +21,8 @@ const application_service_1 = require("./application.service");
 /* Public — apply on a job */
 const applyOnJob = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { jobId } = req.params;
-    const result = yield application_service_1.ApplicationServices.applyOnJob(jobId, req.body);
+    const file = req.file;
+    const result = yield application_service_1.ApplicationServices.applyOnJob(jobId, req.body, file);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.CREATED,
         success: true,
@@ -32,7 +33,8 @@ const applyOnJob = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 /* Admin/HR — manually add candidate */
 const addCandidate = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
-    const result = yield application_service_1.ApplicationServices.addCandidate(userId, req.body);
+    const file = req.file;
+    const result = yield application_service_1.ApplicationServices.addCandidate(userId, req.body, file);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.CREATED,
         success: true,

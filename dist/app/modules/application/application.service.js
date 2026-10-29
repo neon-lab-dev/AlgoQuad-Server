@@ -20,6 +20,7 @@ const application_model_1 = __importDefault(require("./application.model"));
 const job_model_1 = __importDefault(require("../job/job.model"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const infinitePaginate_1 = require("../../utils/infinitePaginate");
+const sendImageToCloudinary_1 = require("../../utils/sendImageToCloudinary");
 /* ─── Helper: map status → milestone date field ───────────────── */
 const statusDateField = {
     New: null,
@@ -30,7 +31,7 @@ const statusDateField = {
     Hired: "hiredAt",
 };
 /* ─── Public: Apply on a Job ──────────────────────────────────── */
-const applyOnJob = (jobId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+const applyOnJob = (jobId, payload, file) => __awaiter(void 0, void 0, void 0, function* () {
     if (!mongoose_1.Types.ObjectId.isValid(jobId)) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Invalid job id");
     }
@@ -43,13 +44,23 @@ const applyOnJob = (jobId, payload) => __awaiter(void 0, void 0, void 0, functio
     }
     const duplicate = yield application_model_1.default.findOne({
         jobId,
-        email: payload.email.toLowerCase(),
+        email: payload.email,
         isDeleted: false,
     });
     if (duplicate) {
         throw new AppError_1.default(http_status_1.default.CONFLICT, "You have already applied for this job with this email.");
     }
-    const application = yield application_model_1.default.create(Object.assign(Object.assign({}, payload), { email: payload.email.toLowerCase(), jobId, status: "New", history: [{ status: "New", at: new Date(), note: "Application submitted" }] }));
+    let resumeUrl = "";
+    if (file) {
+        const imageName = `resume-${payload.email}-${Date.now()}`;
+        const { secure_url } = yield (0, sendImageToCloudinary_1.sendImageToCloudinary)(imageName, file.path);
+        resumeUrl = secure_url;
+    }
+    else {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Resume file is required");
+    }
+    const application = yield application_model_1.default.create(Object.assign(Object.assign({}, payload), { email: payload.email, jobId,
+        resumeUrl, status: "New", history: [{ status: "New", at: new Date(), note: "Application submitted" }] }));
     // Link application to job
     yield job_model_1.default.findByIdAndUpdate(jobId, {
         $push: { applications: application._id },
@@ -57,7 +68,8 @@ const applyOnJob = (jobId, payload) => __awaiter(void 0, void 0, void 0, functio
     return application;
 });
 /* ─── Admin/HR: Manually Add Candidate ───────────────────────── */
-const addCandidate = (userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+const addCandidate = (userId, payload, file // <-- Accept the file
+) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     if (!mongoose_1.Types.ObjectId.isValid(payload.jobId)) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Invalid job id");
@@ -76,7 +88,17 @@ const addCandidate = (userId, payload) => __awaiter(void 0, void 0, void 0, func
     if (duplicate) {
         throw new AppError_1.default(http_status_1.default.CONFLICT, "A candidate with this email already exists for this job.");
     }
-    const data = Object.assign(Object.assign({}, payload), { email: payload.email.toLowerCase(), resumeRating: (_a = payload.resumeRating) !== null && _a !== void 0 ? _a : 0, status, addedBy: userId, history: [
+    // ---- Upload File to Cloudinary ----
+    let resumeUrl = "";
+    if (file) {
+        const imageName = `resume-${payload.email}-${Date.now()}`;
+        const { secure_url } = yield (0, sendImageToCloudinary_1.sendImageToCloudinary)(imageName, file.path);
+        resumeUrl = secure_url;
+    }
+    else {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Resume file is required");
+    }
+    const data = Object.assign(Object.assign({}, payload), { email: payload.email.toLowerCase(), resumeUrl, resumeRating: (_a = payload.resumeRating) !== null && _a !== void 0 ? _a : 0, status, addedBy: userId, history: [
             {
                 status,
                 note: "Candidate added manually",

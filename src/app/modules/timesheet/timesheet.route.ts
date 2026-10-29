@@ -5,9 +5,9 @@ import { UserRole } from "../auth/auth.constants";
 
 const router = express.Router();
 
-router.get("/my", auth(UserRole.employee), TimesheetController.getMyTimesheet);
+router.get("/my", auth(UserRole.employee, UserRole.hr), TimesheetController.getMyTimesheet);
 
-router.post("/add-hours", auth(UserRole.employee), TimesheetController.addWorkingHours);
+router.post("/add-hours", auth(UserRole.employee, UserRole.hr), TimesheetController.addWorkingHours);
 
 router.get(
   "/employee/:employeeId",

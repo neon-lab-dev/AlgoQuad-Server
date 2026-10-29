@@ -61,6 +61,10 @@ const jobSchema = new mongoose_1.Schema({
             type: mongoose_1.Schema.Types.ObjectId,
         },
     ],
+    applicationDeadline: {
+        type: Date,
+        required: true,
+    },
     addedBy: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "User",

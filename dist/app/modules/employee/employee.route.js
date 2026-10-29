@@ -14,7 +14,7 @@ const router = express_1.default.Router();
 router.post("/add", (0, auth_1.default)(auth_constants_1.UserRole.hr, auth_constants_1.UserRole.admin), multer_config_1.multerUpload.single("file"), employee_controller_1.EmployeeController.addEmployee);
 // Get All
 router.get("/", (0, auth_1.default)(auth_constants_1.UserRole.hr, auth_constants_1.UserRole.admin), employee_controller_1.EmployeeController.getAllEmployees);
-router.get("/my-profile", (0, auth_1.default)(auth_constants_1.UserRole.employee), employee_controller_1.EmployeeController.getMyProfile);
+router.get("/my-profile", (0, auth_1.default)(auth_constants_1.UserRole.employee, auth_constants_1.UserRole.hr), employee_controller_1.EmployeeController.getMyProfile);
 // Get Single
 router.get("/:id", (0, auth_1.default)(auth_constants_1.UserRole.hr, auth_constants_1.UserRole.admin), employee_controller_1.EmployeeController.getSingleEmployee);
 //  Update

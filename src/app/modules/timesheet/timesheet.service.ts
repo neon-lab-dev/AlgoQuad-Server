@@ -59,7 +59,7 @@ const addWorkingHoursIntoDB = async (
     const dateObj = new Date(date);
     dateObj.setUTCHours(0, 0, 0, 0);
 
-    const month = dateObj.getUTCMonth();
+    const month = dateObj.getUTCMonth() + 1;
     const year = dateObj.getUTCFullYear();
 
     // Upsert logic: Create if it doesn't exist, update hours if it does.

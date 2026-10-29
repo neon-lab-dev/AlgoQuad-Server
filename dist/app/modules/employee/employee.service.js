@@ -59,7 +59,7 @@ const addEmployee = (payload, file) => __awaiter(void 0, void 0, void 0, functio
             state: payload.state,
             country: payload.country,
             password: "12345678", // Default password
-            role: "employee",
+            role: payload.role || "employee",
             profilePicture: profilePictureUrl,
             isFirstLogin: true,
         };
