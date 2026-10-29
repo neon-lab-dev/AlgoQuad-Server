@@ -5,6 +5,7 @@ import { ApplicationRoutes } from "../modules/application/application.route";
 import { EmployeeRoutes } from "../modules/employee/employee.route";
 import { UserRoutes } from "../modules/user/user.route";
 import { AdminRoutes } from "../modules/admin/admin.route";
+import { TimesheetRoutes } from "../modules/timesheet/timesheet.route";
 
 const router = Router();
 
@@ -32,6 +33,10 @@ const moduleRoutes = [
   {
     path: "/admin",
     route: AdminRoutes,
+  },
+  {
+    path: "/timesheet",
+    route: TimesheetRoutes,
   },
 ];
 
