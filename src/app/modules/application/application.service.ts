@@ -6,6 +6,7 @@ import Job from "../job/job.model";
 import AppError from "../../errors/AppError";
 import { infinitePaginate } from "../../utils/infinitePaginate";
 import { sendImageToCloudinary } from "../../utils/sendImageToCloudinary";
+import { ObjectId } from "mongoose";
 
 /* ─── Helper: map status → milestone date field ───────────────── */
 const statusDateField: Record<
@@ -29,6 +30,7 @@ const applyOnJob = async (
     phoneNumber: string;
     experience: string;
     resumeUrl: string;
+    referrer?: string | ObjectId;
   },
   file?: Express.Multer.File
 ) => {
@@ -75,6 +77,7 @@ const applyOnJob = async (
     resumeUrl,
     status: "New",
     history: [{ status: "New", at: new Date(), note: "Application submitted" }],
+    referredBy: payload.referrer,
   });
 
   // Link application to job
