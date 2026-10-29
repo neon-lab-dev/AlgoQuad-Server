@@ -105,7 +105,7 @@ const addCandidate = (userId, payload, file // <-- Accept the file
                 changedBy: userId,
                 at: new Date(),
             },
-        ] });
+        ], referredBy: payload.referredBy });
     if (dateField)
         data[dateField] = new Date();
     const application = yield application_model_1.default.create(data);
@@ -145,6 +145,7 @@ const getAllApplications = (...args_1) => __awaiter(void 0, [...args_1], void 0,
     }
     return (0, infinitePaginate_1.infinitePaginate)(application_model_1.default, query, skip, limit, [
         { path: "jobId", select: "title department location employmentType status" },
+        { path: "referredBy", select: "name email _id" },
     ]);
 });
 /* ─── Admin/HR: Get Applications for a specific Job ──────────── */
@@ -177,7 +178,7 @@ const getAllApplicationsByJobId = (jobId_1, ...args_1) => __awaiter(void 0, [job
     if (filters.keyword) {
         query.$text = { $search: filters.keyword };
     }
-    const result = yield (0, infinitePaginate_1.infinitePaginate)(application_model_1.default, query, skip, limit, [{ path: "jobId", select: "title department location employmentType status" },]);
+    const result = yield (0, infinitePaginate_1.infinitePaginate)(application_model_1.default, query, skip, limit, [{ path: "jobId", select: "title department location employmentType status" }, { path: "referredBy", select: "name email _id" }]);
     return Object.assign({ job }, result);
 });
 /* ─── Admin/HR: Get Single Application ───────────────────────── */
@@ -190,6 +191,7 @@ const getSingleApplicationById = (applicationId) => __awaiter(void 0, void 0, vo
         isDeleted: false,
     })
         .populate("jobId", "title department location employmentType status")
+        .populate("referredBy", "name email _id")
         .populate("addedBy", "name email role")
         .populate("history.changedBy", "name email role");
     if (!application) {

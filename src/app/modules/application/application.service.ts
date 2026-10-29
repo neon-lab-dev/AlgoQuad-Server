@@ -98,6 +98,7 @@ const addCandidate = async (
     jobId: string;
     experience: string;
     source: string;
+    referredBy?: string | ObjectId;
     resumeRating?: number;
     status?: string;
   },
@@ -152,6 +153,7 @@ const addCandidate = async (
         at: new Date(),
       },
     ],
+    referredBy: payload.referredBy,
   };
 
   if (dateField) data[dateField] = new Date();
@@ -212,6 +214,7 @@ const getAllApplications = async (
 
   return infinitePaginate(Application, query, skip, limit, [
     { path: "jobId", select: "title department location employmentType status" },
+    { path: "referredBy", select: "name email _id" },
   ]);
 };
 
@@ -261,7 +264,7 @@ const getAllApplicationsByJobId = async (
     query.$text = { $search: filters.keyword };
   }
 
-  const result = await infinitePaginate(Application, query, skip, limit, [{ path: "jobId", select: "title department location employmentType status" },]);
+  const result = await infinitePaginate(Application, query, skip, limit, [{ path: "jobId", select: "title department location employmentType status" }, { path: "referredBy", select: "name email _id" }]);
 
   return {
     job,
@@ -280,6 +283,7 @@ const getSingleApplicationById = async (applicationId: string) => {
     isDeleted: false,
   })
     .populate("jobId", "title department location employmentType status")
+    .populate("referredBy", "name email _id")
     .populate("addedBy", "name email role")
     .populate("history.changedBy", "name email role");
 
