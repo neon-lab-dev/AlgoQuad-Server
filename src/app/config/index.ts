@@ -13,9 +13,6 @@ export default {
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SCERET,
-  reset_password_ui_url: process.env.RESET_PASSWORD_UI_URL,
-  smtp_email: process.env.SMTP_EMAIL,
-  smtp_pass: process.env.SMTP_PASS,
   resend_api_key: process.env.RESEND_API_KEY,
   email_from: process.env.EMAIL_FROM,
 };

@@ -3,6 +3,12 @@ import { JobModel, TJob } from "./job.interface";
 
 const jobSchema = new Schema<TJob, JobModel>(
   {
+    jobId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     title: {
       type: String,
       required: true,

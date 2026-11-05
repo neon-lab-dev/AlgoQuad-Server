@@ -6,34 +6,79 @@ import { User } from "../auth/auth.model";
 import { sendImageToCloudinary } from "../../utils/sendImageToCloudinary";
 
 // Helper to generate ID (AQ-YYMMDD-XXX)
-const generateEmployeeId = async (joiningDate: Date) => {
-    const dateStr = joiningDate.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
-    const prefix = `AQ-${dateStr}-`;
+const generateEmployeeId = async (manualId?: string) => {
+    // 1. Count existing employees (excluding soft-deleted ones)
+    const totalEmployees = await Employee.countDocuments({ isDeleted: false });
 
-    // Find the latest employee with this prefix
-    const lastEmployee = await Employee.findOne({
-        employeeId: { $regex: new RegExp(`^${prefix}`) },
-    }).sort({ employeeId: -1 });
+    // --- PHASE 1: First 30 Employees (Manual Entry) ---
+    if (totalEmployees < 30) {
+        if (!manualId) {
+            throw new AppError(
+                httpStatus.BAD_REQUEST,
+                "Manual ID is required for the first 30 employees."
+            );
+        }
 
-    let nextSeq = 1;
-    if (lastEmployee) {
-        const parts = lastEmployee.employeeId.split("-");
-        const lastSeq = parseInt(parts[parts.length - 1], 10);
-        nextSeq = lastSeq + 1;
+        // Format the manual ID (e.g., if user enters "5", make it "005")
+        const formattedId = manualId.padStart(3, "0");
+        const finalEmployeeId = `AQ-EMP-${formattedId}`;
+
+        // Check if this ID is already taken
+        const existing = await Employee.findOne({ employeeId: finalEmployeeId });
+        if (existing) {
+            throw new AppError(
+                httpStatus.CONFLICT,
+                `Employee ID ${finalEmployeeId} is already taken.`
+            );
+        }
+
+        return finalEmployeeId;
     }
 
-    return `${prefix}${String(nextSeq).padStart(3, "0")}`;
+    // --- PHASE 2: After 30 Employees (Auto Sequence) ---
+    // Find the latest employee overall to get the highest sequence number
+    const lastEmployee = await Employee.findOne({ isDeleted: false })
+        .sort({ employeeId: -1 }) // Sorts descending, so AQ-EMP-099 comes before AQ-EMP-031
+        .select("employeeId");
+
+    let nextSeq = 1;
+    if (lastEmployee && lastEmployee.employeeId) {
+        // Extract the number from "AQ-EMP-XXX"
+        const parts = lastEmployee.employeeId.split("-");
+        const lastSeq = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(lastSeq)) {
+            nextSeq = lastSeq + 1;
+        }
+    }
+
+    return `AQ-EMP-${String(nextSeq).padStart(3, "0")}`;
 };
 
 // 1. Create Employee (Calls Signup internally)
 const addEmployee = async (payload: any, file?: Express.Multer.File) => {
+    const existingUser = await User.findOne({
+        $or: [
+            { email: payload.email },
+            { phoneNumber: payload.phoneNumber }
+        ]
+    });
+
+    if (existingUser) {
+        if (existingUser.email === payload.email) {
+            throw new AppError(httpStatus.CONFLICT, "User already exists with this email.");
+        }
+        if (existingUser.phoneNumber === payload.phoneNumber) {
+            throw new AppError(httpStatus.CONFLICT, "User already exists with this phone number.");
+        }
+    }
+
     const session = await Employee.startSession();
     session.startTransaction();
 
     try {
         // Generate Employee ID
         const joiningDate = new Date(payload.joiningDate || Date.now());
-        const employeeId = await generateEmployeeId(joiningDate);
+        const employeeId = await generateEmployeeId(payload?.manualId);
 
         let profilePictureUrl: string | undefined;
         if (file) {
@@ -42,7 +87,7 @@ const addEmployee = async (payload: any, file?: Express.Multer.File) => {
             profilePictureUrl = secure_url as string;
         }
 
-        // 1. Create User (Signup logic)
+        // 2. Create User (Signup logic)
         const userPayload = {
             name: payload.name,
             email: payload.email,
@@ -60,7 +105,6 @@ const addEmployee = async (payload: any, file?: Express.Multer.File) => {
         const user = await User.create([userPayload], { session });
         if (!user.length) throw new AppError(httpStatus.BAD_REQUEST, "Failed to create user");
 
-        // 2. Create Employee Profile
         const employeePayload = {
             employeeId,
             userId: user[0]._id,

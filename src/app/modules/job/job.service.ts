@@ -14,7 +14,20 @@ const addJob = async (userId: any, payload: any) => {
     return [];
   };
 
+  // Generate the next Job ID
+  const totalJobs = await Job.countDocuments();
+  let nextSeq = totalJobs + 1;
+  let jobId = `AQ-JID-${String(nextSeq).padStart(4, "0")}`;
+
+  let isIdTaken = await Job.findOne({ jobId });
+  while (isIdTaken) {
+    nextSeq++;
+    jobId = `AQ-JID-${String(nextSeq).padStart(4, "0")}`;
+    isIdTaken = await Job.findOne({ jobId });
+  }
+
   const job = await Job.create({
+    jobId,
     ...payload,
     skills: toArray(payload.skills),
     responsibilities: toArray(payload.responsibilities),
@@ -50,12 +63,48 @@ const getAllJobs = async (
     query.$text = { $search: filters.keyword };
   }
 
-  return infinitePaginate(Job, query, skip, limit, ["addedBy" ], "name email role");
+  return infinitePaginate(Job, query, skip, limit, ["addedBy"], "name email role");
+};
+
+/* Get All Jobs */
+const getAllActiveJobs = async (
+  filters: {
+    keyword?: string;
+    department?: string;
+    location?: string;
+    employmentType?: string;
+  } = {},
+  skip = 0,
+  limit = 10
+) => {
+  const query: any = {status: "Active"};
+
+  if (filters.department) query.department = filters.department;
+  if (filters.location) query.location = filters.location;
+  if (filters.employmentType) query.employmentType = filters.employmentType;
+
+  if (filters.keyword) {
+    query.$text = { $search: filters.keyword };
+  }
+
+  return infinitePaginate(Job, query, skip, limit, ["addedBy"], "name email role");
 };
 
 /* Get Single Job */
 const getSingleJobById = async (jobId: string) => {
   const job = await Job.findById(jobId)
+    .populate("addedBy", "name email role")
+
+  if (!job) {
+    throw new AppError(httpStatus.NOT_FOUND, "Job not found");
+  }
+
+  return job;
+};
+
+/* Get Single Job by Custom Job ID */
+const getSingleJobByCustomJobId = async (jobId: string) => {
+  const job = await Job.findOne({ jobId })
     .populate("addedBy", "name email role")
 
   if (!job) {
@@ -120,7 +169,9 @@ const deleteJob = async (jobId: string) => {
 export const JobServices = {
   addJob,
   getAllJobs,
+  getAllActiveJobs,
   getSingleJobById,
+  getSingleJobByCustomJobId,
   updateJob,
   deleteJob,
 };

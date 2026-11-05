@@ -5,6 +5,7 @@ export type TJobStatus = "Active" | "Closed" | "Draft";
 
 export type TJob = {
   _id?: ObjectId;
+  jobId: string;
   title: string;
   department: string;
   openings: number;

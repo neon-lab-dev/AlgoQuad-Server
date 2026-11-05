@@ -14,6 +14,8 @@ router.post(
 
 /* Public: browse & view */
 router.get("/", JobControllers.getAllJobs);
+router.get("/active", JobControllers.getAllActiveJobs);
+router.get("/custom/:jobId", JobControllers.getSingleJobByCustomJobId);
 router.get("/:jobId", JobControllers.getSingleJobById);
 
 /* Admin-only */
