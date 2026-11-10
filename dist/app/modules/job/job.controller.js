@@ -50,10 +50,41 @@ const getAllJobs = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
         },
     });
 }));
+/* Get All Jobs */
+const getAllActiveJobs = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { keyword, department, location, employmentType, skip = "0", limit = "10", } = req.query;
+    const filters = {
+        keyword: keyword,
+        department: department,
+        location: location,
+        employmentType: employmentType,
+    };
+    const result = yield job_service_1.JobServices.getAllActiveJobs(filters, Number(skip), Number(limit));
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: "Jobs retrieved successfully",
+        data: {
+            jobs: result.data,
+            meta: result.meta,
+        },
+    });
+}));
 /* Get Single Job */
 const getSingleJobById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { jobId } = req.params;
     const result = yield job_service_1.JobServices.getSingleJobById(jobId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: "Job retrieved successfully",
+        data: result,
+    });
+}));
+/* Get Single Job by Custom Job ID */
+const getSingleJobByCustomJobId = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { jobId } = req.params;
+    const result = yield job_service_1.JobServices.getSingleJobByCustomJobId(jobId);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -86,7 +117,9 @@ const deleteJob = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
 exports.JobControllers = {
     addJob,
     getAllJobs,
+    getAllActiveJobs,
     getSingleJobById,
+    getSingleJobByCustomJobId,
     updateJob,
     deleteJob,
 };

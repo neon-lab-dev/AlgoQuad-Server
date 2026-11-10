@@ -20,36 +20,69 @@ const http_status_1 = __importDefault(require("http-status"));
 const auth_model_1 = require("../auth/auth.model");
 const sendImageToCloudinary_1 = require("../../utils/sendImageToCloudinary");
 // Helper to generate ID (AQ-YYMMDD-XXX)
-const generateEmployeeId = (joiningDate) => __awaiter(void 0, void 0, void 0, function* () {
-    const dateStr = joiningDate.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
-    const prefix = `AQ-${dateStr}-`;
-    // Find the latest employee with this prefix
-    const lastEmployee = yield employee_model_1.default.findOne({
-        employeeId: { $regex: new RegExp(`^${prefix}`) },
-    }).sort({ employeeId: -1 });
+const generateEmployeeId = (manualId) => __awaiter(void 0, void 0, void 0, function* () {
+    // 1. Count existing employees (excluding soft-deleted ones)
+    const totalEmployees = yield employee_model_1.default.countDocuments({ isDeleted: false });
+    // --- PHASE 1: First 30 Employees (Manual Entry) ---
+    if (totalEmployees < 30) {
+        if (!manualId) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Manual ID is required for the first 30 employees.");
+        }
+        // Format the manual ID (e.g., if user enters "5", make it "005")
+        const formattedId = manualId.padStart(3, "0");
+        const finalEmployeeId = `AQ-EMP-${formattedId}`;
+        // Check if this ID is already taken
+        const existing = yield employee_model_1.default.findOne({ employeeId: finalEmployeeId });
+        if (existing) {
+            throw new AppError_1.default(http_status_1.default.CONFLICT, `Employee ID ${finalEmployeeId} is already taken.`);
+        }
+        return finalEmployeeId;
+    }
+    // --- PHASE 2: After 30 Employees (Auto Sequence) ---
+    // Find the latest employee overall to get the highest sequence number
+    const lastEmployee = yield employee_model_1.default.findOne({ isDeleted: false })
+        .sort({ employeeId: -1 }) // Sorts descending, so AQ-EMP-099 comes before AQ-EMP-031
+        .select("employeeId");
     let nextSeq = 1;
-    if (lastEmployee) {
+    if (lastEmployee && lastEmployee.employeeId) {
+        // Extract the number from "AQ-EMP-XXX"
         const parts = lastEmployee.employeeId.split("-");
         const lastSeq = parseInt(parts[parts.length - 1], 10);
-        nextSeq = lastSeq + 1;
+        if (!isNaN(lastSeq)) {
+            nextSeq = lastSeq + 1;
+        }
     }
-    return `${prefix}${String(nextSeq).padStart(3, "0")}`;
+    return `AQ-EMP-${String(nextSeq).padStart(3, "0")}`;
 });
 // 1. Create Employee (Calls Signup internally)
 const addEmployee = (payload, file) => __awaiter(void 0, void 0, void 0, function* () {
+    const existingUser = yield auth_model_1.User.findOne({
+        $or: [
+            { email: payload.email },
+            { phoneNumber: payload.phoneNumber }
+        ]
+    });
+    if (existingUser) {
+        if (existingUser.email === payload.email) {
+            throw new AppError_1.default(http_status_1.default.CONFLICT, "User already exists with this email.");
+        }
+        if (existingUser.phoneNumber === payload.phoneNumber) {
+            throw new AppError_1.default(http_status_1.default.CONFLICT, "User already exists with this phone number.");
+        }
+    }
     const session = yield employee_model_1.default.startSession();
     session.startTransaction();
     try {
         // Generate Employee ID
         const joiningDate = new Date(payload.joiningDate || Date.now());
-        const employeeId = yield generateEmployeeId(joiningDate);
+        const employeeId = yield generateEmployeeId(payload === null || payload === void 0 ? void 0 : payload.manualId);
         let profilePictureUrl;
         if (file) {
             const imageName = `employee-${Date.now()}`;
             const { secure_url } = yield (0, sendImageToCloudinary_1.sendImageToCloudinary)(imageName, file.path);
             profilePictureUrl = secure_url;
         }
-        // 1. Create User (Signup logic)
+        // 2. Create User (Signup logic)
         const userPayload = {
             name: payload.name,
             email: payload.email,
@@ -66,7 +99,6 @@ const addEmployee = (payload, file) => __awaiter(void 0, void 0, void 0, functio
         const user = yield auth_model_1.User.create([userPayload], { session });
         if (!user.length)
             throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Failed to create user");
-        // 2. Create Employee Profile
         const employeePayload = {
             employeeId,
             userId: user[0]._id,

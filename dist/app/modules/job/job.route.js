@@ -13,6 +13,8 @@ const router = express_1.default.Router();
 router.post("/post", (0, auth_1.default)(auth_constants_1.UserRole.admin, auth_constants_1.UserRole.hr), job_controller_1.JobControllers.addJob);
 /* Public: browse & view */
 router.get("/", job_controller_1.JobControllers.getAllJobs);
+router.get("/active", job_controller_1.JobControllers.getAllActiveJobs);
+router.get("/custom/:jobId", job_controller_1.JobControllers.getSingleJobByCustomJobId);
 router.get("/:jobId", job_controller_1.JobControllers.getSingleJobById);
 /* Admin-only */
 router.patch("/update/:jobId", (0, auth_1.default)(auth_constants_1.UserRole.admin, auth_constants_1.UserRole.hr), job_controller_1.JobControllers.updateJob);

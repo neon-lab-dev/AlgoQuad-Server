@@ -28,7 +28,17 @@ const addJob = (userId, payload) => __awaiter(void 0, void 0, void 0, function* 
         }
         return [];
     };
-    const job = yield job_model_1.default.create(Object.assign(Object.assign({}, payload), { skills: toArray(payload.skills), responsibilities: toArray(payload.responsibilities), qualifications: toArray(payload.qualifications), perks: toArray(payload.perks), applications: [], addedBy: userId }));
+    // Generate the next Job ID
+    const totalJobs = yield job_model_1.default.countDocuments();
+    let nextSeq = totalJobs + 1;
+    let jobId = `AQ-JID-${String(nextSeq).padStart(4, "0")}`;
+    let isIdTaken = yield job_model_1.default.findOne({ jobId });
+    while (isIdTaken) {
+        nextSeq++;
+        jobId = `AQ-JID-${String(nextSeq).padStart(4, "0")}`;
+        isIdTaken = yield job_model_1.default.findOne({ jobId });
+    }
+    const job = yield job_model_1.default.create(Object.assign(Object.assign({ jobId }, payload), { skills: toArray(payload.skills), responsibilities: toArray(payload.responsibilities), qualifications: toArray(payload.qualifications), perks: toArray(payload.perks), applications: [], addedBy: userId }));
     return job;
 });
 /* Get All Jobs */
@@ -47,9 +57,32 @@ const getAllJobs = (...args_1) => __awaiter(void 0, [...args_1], void 0, functio
     }
     return (0, infinitePaginate_1.infinitePaginate)(job_model_1.default, query, skip, limit, ["addedBy"], "name email role");
 });
+/* Get All Jobs */
+const getAllActiveJobs = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (filters = {}, skip = 0, limit = 10) {
+    const query = { status: "Active" };
+    if (filters.department)
+        query.department = filters.department;
+    if (filters.location)
+        query.location = filters.location;
+    if (filters.employmentType)
+        query.employmentType = filters.employmentType;
+    if (filters.keyword) {
+        query.$text = { $search: filters.keyword };
+    }
+    return (0, infinitePaginate_1.infinitePaginate)(job_model_1.default, query, skip, limit, ["addedBy"], "name email role");
+});
 /* Get Single Job */
 const getSingleJobById = (jobId) => __awaiter(void 0, void 0, void 0, function* () {
     const job = yield job_model_1.default.findById(jobId)
+        .populate("addedBy", "name email role");
+    if (!job) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Job not found");
+    }
+    return job;
+});
+/* Get Single Job by Custom Job ID */
+const getSingleJobByCustomJobId = (jobId) => __awaiter(void 0, void 0, void 0, function* () {
+    const job = yield job_model_1.default.findOne({ jobId })
         .populate("addedBy", "name email role");
     if (!job) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Job not found");
@@ -108,7 +141,9 @@ const deleteJob = (jobId) => __awaiter(void 0, void 0, void 0, function* () {
 exports.JobServices = {
     addJob,
     getAllJobs,
+    getAllActiveJobs,
     getSingleJobById,
+    getSingleJobByCustomJobId,
     updateJob,
     deleteJob,
 };

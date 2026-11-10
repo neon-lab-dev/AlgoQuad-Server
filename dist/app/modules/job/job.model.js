@@ -2,6 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const jobSchema = new mongoose_1.Schema({
+    jobId: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+    },
     title: {
         type: String,
         required: true,
