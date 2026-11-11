@@ -22,7 +22,8 @@ app.use(
       "http://localhost:5173",
       "https://algoquad-hr-portal.vercel.app",
       "https://www.algoquad.in",
-      "https://algoquad.in"
+      "https://algoquad.in",
+      "https://hr.algoquad.in"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
